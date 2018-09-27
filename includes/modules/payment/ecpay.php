@@ -219,7 +219,7 @@ class ecpay
             # Set  parameters
             $aio = new ECPay_AllInOne();
             $aio->Send['MerchantTradeNo'] = '';
-            if (MODULE_PAYMENT_ECPAY_TEST_MODE)
+            if (MODULE_PAYMENT_ECPAY_TEST_MODE === 'True')
             {
                 $service_url = 'https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V4';
                 $aio->Send['MerchantTradeNo'] = date('YmdHis');
@@ -253,7 +253,7 @@ class ecpay
                 )
             );
             $aio->Send['TotalAmount'] = $total_price;
-            $aio->Send['TradeDesc'] = 'ecpay_module_oscommerce_1.0.1221';
+            $aio->Send['TradeDesc'] = 'ecpay_module_oscommerce';
             
             # Set the payment
             $ecpay_choose_payment = $this->check_payment($_POST['ecpay_choose_payment']);

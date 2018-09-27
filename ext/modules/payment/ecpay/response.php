@@ -1,10 +1,10 @@
 <?php
     /**
      * @copyright  Copyright (c) 2017 ECPay (https://www.ecpay.com.tw/
-     * @version 1.0.1221
+     * @version 1.0.180925
      * @author Wesley.Chen
     */
-
+    
     chdir('../../../../');
     require('includes/application_top.php');
     
@@ -60,7 +60,7 @@
     
     try
     {
-        # Load SDK 
+        # Load SDK
         require('ECPay.Payment.Integration.php');
         
         # Set the parameters
@@ -83,7 +83,7 @@
         {
             # Get osCommerce order id
             $osc_order_id = $ecpay_result['MerchantTradeNo'];
-            if (MODULE_PAYMENT_ECPAY_TEST_MODE)
+            if (MODULE_PAYMENT_ECPAY_TEST_MODE === 'True')
             {
                 $osc_order_id = substr($osc_order_id, 14);
             }
@@ -112,6 +112,24 @@
             {
                 $success_msg = '1|OK';
                 
+                # Set the order created status id
+                $order_create_status_id = DEFAULT_ORDERS_STATUS_ID;
+                if (MODULE_PAYMENT_ECPAY_ORDER_CREATE_STATUS_ID > 0) {
+                    $order_create_status_id = MODULE_PAYMENT_ECPAY_ORDER_CREATE_STATUS_ID;
+                }
+                
+                # Set the order paid status id
+                $order_paid_status_id = DEFAULT_ORDERS_STATUS_ID;
+                if (MODULE_PAYMENT_ECPAY_PAID_STATUS_ID > 0) {
+                    $order_paid_status_id = MODULE_PAYMENT_ECPAY_PAID_STATUS_ID;
+                }
+                
+                # Set the order unpaid status id
+                $order_unpaid_status_id = DEFAULT_ORDERS_STATUS_ID;
+                if (MODULE_PAYMENT_ECPAY_UNPAID_STATUS_ID > 0) {
+                    $order_unpaid_status_id = MODULE_PAYMENT_ECPAY_UNPAID_STATUS_ID;
+                }
+
                 # Set the common comments
                 $comments = sprintf(
                     MODULE_PAYMENT_ECPAY_COMMON_COMMENTS
@@ -137,10 +155,11 @@
                 
                 # Get payment and payment target
                 list($ecpay_payment_method, $ecpay_payment_target) = explode('_', $ecpay_result['PaymentType']);
+                $ecpay_payment_method = strtolower($ecpay_payment_method);
                 switch ($ecpay_payment_method)
                 {
-                    case 'Credit':
-                    case 'WebATM':
+                    case 'credit':
+                    case 'webatm':
                         if ($return_code != 1 and $return_code != 800)
                         {
                             throw new Exception('Order ' . $osc_order_id . ' Exception.(' . $return_code . ': ' . $ecpay_result['RtnMsg'] . ')');
@@ -148,7 +167,7 @@
                         else
                         {
                             # Only finish the order when the status is processing
-                            if ($osc_order_status_id != MODULE_PAYMENT_ECPAY_ORDER_CREATE_STATUS_ID)
+                            if ($osc_order_status_id != $order_create_status_id)
                             {
                                 # The order already paid or not in the standard procedure, do nothing
                             }
@@ -156,7 +175,7 @@
                             {
                                 update_order_status(
                                     $osc_order_id
-                                    , MODULE_PAYMENT_ECPAY_PAID_STATUS_ID
+                                    , $order_paid_status_id
                                     , $payment_result_comments
                                 );
                             }
@@ -164,7 +183,7 @@
                             echo $success_msg;
                         }
                         break;
-                    case 'ATM':
+                    case 'atm':
                         if ($return_code != 1 and $return_code != 2 and $return_code != 800)
                         {
                             throw new Exception('Order ' . $osc_order_id . ' Exception.(' . $return_code . ': ' . $ecpay_result['RtnMsg'] . ')');
@@ -186,7 +205,7 @@
                             else
                             {
                                 # Only finish the order when the status is processing
-                                if ($osc_order_status_id != MODULE_PAYMENT_ECPAY_ORDER_CREATE_STATUS_ID)
+                                if ($osc_order_status_id != $order_create_status_id)
                                 {
                                     # The order already paid or not in the standard procedure, do nothing
                                 }
@@ -194,7 +213,7 @@
                                 {
                                     update_order_status(
                                         $osc_order_id
-                                        , MODULE_PAYMENT_ECPAY_PAID_STATUS_ID
+                                        , $order_paid_status_id
                                         , $payment_result_comments
                                     );
                                 }
@@ -203,7 +222,7 @@
                             echo $success_msg;
                         }
                         break;
-                    case 'CVS':
+                    case 'cvs':
                         if ($return_code != 1 and $return_code != 800 and $return_code != 10100073)
                         {
                             throw new Exception('Order ' . $osc_order_id . ' Exception.(' . $return_code . ': ' . $ecpay_result['RtnMsg'] . ')');
@@ -224,7 +243,7 @@
                             else
                             {
                                 # Only finish the order when the status is processing
-                                if ($osc_order_status_id != MODULE_PAYMENT_ECPAY_ORDER_CREATE_STATUS_ID)
+                                if ($osc_order_status_id != $order_create_status_id)
                                 {
                                     # The order already paid or not in the standard procedure, do nothing
                                 }
@@ -232,7 +251,7 @@
                                 {
                                     update_order_status(
                                         $osc_order_id
-                                        , MODULE_PAYMENT_ECPAY_PAID_STATUS_ID
+                                        , $order_paid_status_id
                                         , $payment_result_comments
                                     );
                                 }
@@ -243,7 +262,7 @@
                         break;
 
 
-                        case 'BARCODE':
+                        case 'barcode':
                         if ($return_code != 1 and $return_code != 800 and $return_code != 10100073)
                         {
                             throw new Exception('Order ' . $osc_order_id . ' Exception.(' . $return_code . ': ' . $ecpay_result['RtnMsg'] . ')');
@@ -267,7 +286,7 @@
                             else
                             {
                                 # Only finish the order when the status is processing
-                                if ($osc_order_status_id != MODULE_PAYMENT_ECPAY_ORDER_CREATE_STATUS_ID)
+                                if ($osc_order_status_id != $order_create_status_id)
                                 {
                                     # The order already paid or not in the standard procedure, do nothing
                                 }
@@ -275,7 +294,7 @@
                                 {
                                     update_order_status(
                                         $osc_order_id
-                                        , MODULE_PAYMENT_ECPAY_PAID_STATUS_ID
+                                        , $order_paid_status_id
                                         , $payment_result_comments
                                     );
                                 }
@@ -295,7 +314,7 @@
     {
         if (isset($osc_order_id))
         {
-            update_order_status($osc_order_id, MODULE_PAYMENT_ECPAY_UNPAID_STATUS_ID, MODULE_PAYMENT_ECPAY_FAILED_COMMENTS);
+            update_order_status($osc_order_id, $order_unpaid_status_id, MODULE_PAYMENT_ECPAY_FAILED_COMMENTS);
         }
         echo '0|' . $e->getMessage();
     }
